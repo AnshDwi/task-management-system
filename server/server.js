@@ -13,10 +13,7 @@ const app = express();
 // ✅ FIXED CORS (IMPORTANT)
 app.use(
   cors({
-    origin: [
-      "http://localhost:5173",
-      "https://task-management-system-9qgq1pfdh-anshdwis-projects.vercel.app"
-    ],
+    origin: "*", // ✅ allow all (for now)
     credentials: true,
   })
 );
