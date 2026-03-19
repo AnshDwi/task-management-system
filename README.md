@@ -148,3 +148,8 @@ MIT
 ![Login](screenshots/screenshotslogin.png)
 ![Register](screenshots/screenshotsregister.png)
 ![Dashboard](screenshots/screenshotsdashboard.png)
+
+## 🌐 Live Demo
+
+Frontend: https://task-management-system-9qgq1pfdh-anshdwis-projects.vercel.app  
+Backend: https://task-backend-791c.onrender.com
