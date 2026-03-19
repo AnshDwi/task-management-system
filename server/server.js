@@ -10,21 +10,29 @@ connectDB();
 
 const app = express();
 
+// ✅ FIXED CORS (IMPORTANT)
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || "http://localhost:5173",
+    origin: [
+      "http://localhost:5173",
+      "https://task-management-system-9qgq1pfdh-anshdwis-projects.vercel.app"
+    ],
     credentials: true,
   })
 );
+
 app.use(express.json());
 
+// ✅ Test route
 app.get("/", (req, res) => {
   res.json({ message: "Task Management API is running" });
 });
 
+// ✅ Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/tasks", taskRoutes);
 
+// ✅ Error handler
 app.use((err, req, res, next) => {
   const statusCode = err.statusCode || 500;
   res.status(statusCode).json({
