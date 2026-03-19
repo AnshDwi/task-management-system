@@ -149,7 +149,19 @@ MIT
 ![Register](screenshots/screenshotsregister.png)
 ![Dashboard](screenshots/screenshotsdashboard.png)
 
+
 ## 🌐 Live Demo
 
 Frontend: https://task-management-system-9qgq1pfdh-anshdwis-projects.vercel.app  
 Backend: https://task-backend-791c.onrender.com
+
+
+## 🧠 What I Learned
+
+- Full-stack development (React + Node.js)
+- REST API integration
+- JWT authentication
+- Deployment (Vercel + Render)
+- Debugging real-world issues (CORS, API errors)
+
+
