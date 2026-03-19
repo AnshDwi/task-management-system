@@ -141,3 +141,10 @@ Make sure MongoDB is running locally. If you use MongoDB Atlas, replace `MONGO_U
 ## License
 
 MIT
+
+
+## 📸 Screenshots
+
+![Login](screenshots/screenshotslogin.png)
+![Register](screenshots/screenshotsregister.png)
+![Dashboard](screenshots/screenshotsdashboard.png)
