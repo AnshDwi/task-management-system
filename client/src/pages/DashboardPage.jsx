@@ -8,6 +8,7 @@ const initialFormState = {
   title: "",
   description: "",
   status: "pending",
+  priority: "Medium", // ✅ added
 };
 
 function DashboardPage() {
@@ -17,6 +18,8 @@ function DashboardPage() {
   const [editingTaskId, setEditingTaskId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  const [filterPriority, setFilterPriority] = useState("All"); // ✅ added
 
   const fetchTasks = async () => {
     try {
@@ -52,9 +55,14 @@ function DashboardPage() {
 
     try {
       if (editingTaskId) {
-        const { data } = await axiosInstance.put(`/tasks/${editingTaskId}`, formData);
+        const { data } = await axiosInstance.put(
+          `/tasks/${editingTaskId}`,
+          formData
+        );
         setTasks((previous) =>
-          previous.map((task) => (task._id === editingTaskId ? data : task))
+          previous.map((task) =>
+            task._id === editingTaskId ? data : task
+          )
         );
       } else {
         const { data } = await axiosInstance.post("/tasks", formData);
@@ -73,32 +81,42 @@ function DashboardPage() {
       title: task.title,
       description: task.description,
       status: task.status,
+      priority: task.priority || "Medium", // ✅ added
     });
   };
 
   const handleDelete = async (taskId) => {
     try {
       await axiosInstance.delete(`/tasks/${taskId}`);
-      setTasks((previous) => previous.filter((task) => task._id !== taskId));
+      setTasks((previous) =>
+        previous.filter((task) => task._id !== taskId)
+      );
     } catch (err) {
       setError(err.response?.data?.message || "Failed to delete task");
     }
   };
 
   const handleToggleStatus = async (task) => {
-    const nextStatus = task.status === "completed" ? "pending" : "completed";
+    const nextStatus =
+      task.status === "completed" ? "pending" : "completed";
 
     try {
       const { data } = await axiosInstance.put(`/tasks/${task._id}`, {
         title: task.title,
         description: task.description,
         status: nextStatus,
+        priority: task.priority, // ✅ keep priority
       });
+
       setTasks((previous) =>
-        previous.map((currentTask) => (currentTask._id === task._id ? data : currentTask))
+        previous.map((currentTask) =>
+          currentTask._id === task._id ? data : currentTask
+        )
       );
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to update task status");
+      setError(
+        err.response?.data?.message || "Failed to update task status"
+      );
     }
   };
 
@@ -108,7 +126,9 @@ function DashboardPage() {
         <div>
           <p className="eyebrow">Task Manager</p>
           <h1>{user?.name}'s Dashboard</h1>
-          <p className="header-subtitle">Track work, stay focused, and finish what matters.</p>
+          <p className="header-subtitle">
+            Track work, stay focused, and finish what matters.
+          </p>
         </div>
         <button className="secondary-button" onClick={logout}>
           Logout
@@ -124,7 +144,9 @@ function DashboardPage() {
             isEditing={Boolean(editingTaskId)}
             onCancelEdit={resetForm}
           />
-          {error && <p className="error-message dashboard-error">{error}</p>}
+          {error && (
+            <p className="error-message dashboard-error">{error}</p>
+          )}
         </div>
 
         <div className="task-panel">
@@ -135,13 +157,33 @@ function DashboardPage() {
             </button>
           </div>
 
+          {/* 🔥 FILTER DROPDOWN */}
+          <div className="form-group">
+            <label>Filter by Priority</label>
+            <select
+              value={filterPriority}
+              onChange={(e) => setFilterPriority(e.target.value)}
+            >
+              <option value="All">All</option>
+              <option value="Low">Low</option>
+              <option value="Medium">Medium</option>
+              <option value="High">High</option>
+            </select>
+          </div>
+
           {loading ? (
             <div className="empty-state">
               <h3>Loading tasks...</h3>
             </div>
           ) : (
             <TaskList
-              tasks={tasks}
+              tasks={
+                tasks.filter((task) =>
+                  filterPriority === "All"
+                    ? true
+                    : task.priority === filterPriority
+                )
+              }
               onEdit={handleEdit}
               onDelete={handleDelete}
               onToggleStatus={handleToggleStatus}
