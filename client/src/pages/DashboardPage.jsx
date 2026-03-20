@@ -8,18 +8,45 @@ const initialFormState = {
   title: "",
   description: "",
   status: "pending",
-  priority: "Medium", // ✅ added
+  priority: "Medium",
 };
 
 function DashboardPage() {
   const { user, logout } = useAuth();
+
   const [tasks, setTasks] = useState([]);
   const [formData, setFormData] = useState(initialFormState);
   const [editingTaskId, setEditingTaskId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const [filterPriority, setFilterPriority] = useState("All"); // ✅ added
+  const [filterPriority, setFilterPriority] = useState("All");
+  const [search, setSearch] = useState("");
+
+  const [theme, setTheme] = useState(
+    localStorage.getItem("theme") || "system"
+  );
+
+  // 📊 STATS
+  const total = tasks.length;
+  const completed = tasks.filter((t) => t.status === "completed").length;
+  const pending = tasks.filter((t) => t.status === "pending").length;
+
+  // 🌗 THEME FIXED
+  useEffect(() => {
+    const root = document.documentElement;
+
+    if (theme === "dark") {
+      root.setAttribute("data-theme", "dark");
+    } else if (theme === "light") {
+      root.removeAttribute("data-theme");
+    } else {
+      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      root.setAttribute("data-theme", prefersDark ? "dark" : "light");
+    }
+
+    localStorage.setItem("theme", theme);
+  }, [theme]);
 
   const fetchTasks = async () => {
     try {
@@ -38,8 +65,8 @@ function DashboardPage() {
   }, []);
 
   const handleChange = (event) => {
-    setFormData((previous) => ({
-      ...previous,
+    setFormData((prev) => ({
+      ...prev,
       [event.target.name]: event.target.value,
     }));
   };
@@ -59,14 +86,15 @@ function DashboardPage() {
           `/tasks/${editingTaskId}`,
           formData
         );
-        setTasks((previous) =>
-          previous.map((task) =>
+
+        setTasks((prev) =>
+          prev.map((task) =>
             task._id === editingTaskId ? data : task
           )
         );
       } else {
         const { data } = await axiosInstance.post("/tasks", formData);
-        setTasks((previous) => [data, ...previous]);
+        setTasks((prev) => [data, ...prev]);
       }
 
       resetForm();
@@ -81,15 +109,15 @@ function DashboardPage() {
       title: task.title,
       description: task.description,
       status: task.status,
-      priority: task.priority || "Medium", // ✅ added
+      priority: task.priority || "Medium",
     });
   };
 
   const handleDelete = async (taskId) => {
     try {
       await axiosInstance.delete(`/tasks/${taskId}`);
-      setTasks((previous) =>
-        previous.filter((task) => task._id !== taskId)
+      setTasks((prev) =>
+        prev.filter((task) => task._id !== taskId)
       );
     } catch (err) {
       setError(err.response?.data?.message || "Failed to delete task");
@@ -105,36 +133,60 @@ function DashboardPage() {
         title: task.title,
         description: task.description,
         status: nextStatus,
-        priority: task.priority, // ✅ keep priority
+        priority: task.priority,
       });
 
-      setTasks((previous) =>
-        previous.map((currentTask) =>
-          currentTask._id === task._id ? data : currentTask
-        )
+      setTasks((prev) =>
+        prev.map((t) => (t._id === task._id ? data : t))
       );
     } catch (err) {
-      setError(
-        err.response?.data?.message || "Failed to update task status"
-      );
+      setError(err.response?.data?.message || "Failed to update task");
     }
   };
 
   return (
     <div className="dashboard-page">
+      {/* HEADER */}
       <header className="dashboard-header">
         <div>
           <p className="eyebrow">Task Manager</p>
           <h1>{user?.name}'s Dashboard</h1>
-          <p className="header-subtitle">
-            Track work, stay focused, and finish what matters.
-          </p>
         </div>
-        <button className="secondary-button" onClick={logout}>
-          Logout
-        </button>
+
+        <div className="header-actions">
+          <select
+            value={theme}
+            onChange={(e) => setTheme(e.target.value)}
+            className="theme-select"
+          >
+            <option value="system">System</option>
+            <option value="light">Light</option>
+            <option value="dark">Dark</option>
+          </select>
+
+          <button className="secondary-button" onClick={logout}>
+            Logout
+          </button>
+        </div>
       </header>
 
+      {/* STATS */}
+      <div className="stats">
+        <div className="stat-card">
+          <h3>Total</h3>
+          <p>{total}</p>
+        </div>
+        <div className="stat-card">
+          <h3>Completed</h3>
+          <p>{completed}</p>
+        </div>
+        <div className="stat-card">
+          <h3>Pending</h3>
+          <p>{pending}</p>
+        </div>
+      </div>
+
+      {/* MAIN */}
       <section className="dashboard-grid">
         <div>
           <TaskForm
@@ -144,9 +196,8 @@ function DashboardPage() {
             isEditing={Boolean(editingTaskId)}
             onCancelEdit={resetForm}
           />
-          {error && (
-            <p className="error-message dashboard-error">{error}</p>
-          )}
+
+          {error && <p className="error-message">{error}</p>}
         </div>
 
         <div className="task-panel">
@@ -157,7 +208,16 @@ function DashboardPage() {
             </button>
           </div>
 
-          {/* 🔥 FILTER DROPDOWN */}
+          {/* SEARCH */}
+          <input
+            type="text"
+            placeholder="🔍 Search tasks..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="search-input"
+          />
+
+          {/* FILTER */}
           <div className="form-group">
             <label>Filter by Priority</label>
             <select
@@ -177,16 +237,19 @@ function DashboardPage() {
             </div>
           ) : (
             <TaskList
-              tasks={
-                tasks.filter((task) =>
+              tasks={tasks
+                .filter((task) =>
                   filterPriority === "All"
                     ? true
                     : task.priority === filterPriority
                 )
-              }
+                .filter((task) =>
+                  task.title.toLowerCase().includes(search.toLowerCase())
+                )}
               onEdit={handleEdit}
               onDelete={handleDelete}
               onToggleStatus={handleToggleStatus}
+              setTasks={setTasks}
             />
           )}
         </div>
