@@ -10,36 +10,32 @@ function TaskForm({
       <h2>{isEditing ? "Edit Task" : "Create New Task"}</h2>
 
       <form className="task-form" onSubmit={onSubmit}>
+        {/* TITLE */}
         <div className="form-group">
-          <label htmlFor="title">Title</label>
+          <label>Title</label>
           <input
-            id="title"
             name="title"
             type="text"
             value={formData.title}
             onChange={onChange}
-            placeholder="Task title"
             required
           />
         </div>
 
+        {/* DESCRIPTION */}
         <div className="form-group">
-          <label htmlFor="description">Description</label>
+          <label>Description</label>
           <textarea
-            id="description"
             name="description"
-            rows="4"
             value={formData.description}
             onChange={onChange}
-            placeholder="Write task details"
           />
         </div>
 
-        {/* 🔥 ADD THIS BLOCK */}
+        {/* PRIORITY */}
         <div className="form-group">
-          <label htmlFor="priority">Priority</label>
+          <label>Priority</label>
           <select
-            id="priority"
             name="priority"
             value={formData.priority}
             onChange={onChange}
@@ -50,10 +46,21 @@ function TaskForm({
           </select>
         </div>
 
+        {/* 🔥 IMPORTANT FIX */}
         <div className="form-group">
-          <label htmlFor="status">Status</label>
+  <label>Due Date</label>
+  <input
+    type="date"
+    name="dueDate"   // ✅ MUST BE EXACT
+    value={formData.dueDate || ""}
+    onChange={onChange}
+  />
+</div>
+
+        {/* STATUS */}
+        <div className="form-group">
+          <label>Status</label>
           <select
-            id="status"
             name="status"
             value={formData.status}
             onChange={onChange}
@@ -63,15 +70,17 @@ function TaskForm({
           </select>
         </div>
 
+        {/* BUTTONS */}
         <div className="button-row">
           <button type="submit" className="primary-button">
             {isEditing ? "Update Task" : "Add Task"}
           </button>
+
           {isEditing && (
             <button
               type="button"
-              className="secondary-button"
               onClick={onCancelEdit}
+              className="secondary-button"
             >
               Cancel
             </button>

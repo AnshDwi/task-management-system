@@ -12,16 +12,25 @@ const taskSchema = new mongoose.Schema(
       trim: true,
       default: "",
     },
+
     priority: {
-  type: String,
-  enum: ["Low", "Medium", "High"],
-  default: "Medium",
-},
+      type: String,
+      enum: ["Low", "Medium", "High"],
+      default: "Medium",
+    },
+
     status: {
       type: String,
       enum: ["pending", "completed"],
       default: "pending",
     },
+
+    // 🔥 ADD THIS
+    dueDate: {
+      type: Date,
+      default: null,
+    },
+
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -33,4 +42,3 @@ const taskSchema = new mongoose.Schema(
   }
 );
 
-module.exports = mongoose.model("Task", taskSchema);

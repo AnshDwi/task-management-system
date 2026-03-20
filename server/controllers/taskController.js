@@ -1,5 +1,6 @@
 const Task = require("../models/Task");
 
+// GET TASKS
 const getTasks = async (req, res, next) => {
   try {
     const tasks = await Task.find({ user: req.user._id }).sort({ createdAt: -1 });
@@ -9,18 +10,17 @@ const getTasks = async (req, res, next) => {
   }
 };
 
+// CREATE TASK
 const createTask = async (req, res, next) => {
   try {
-    const { title, description, status } = req.body;
-
-    if (!title) {
-      return res.status(400).json({ message: "Task title is required" });
-    }
+    const { title, description, status, priority, dueDate } = req.body;
 
     const task = await Task.create({
       title,
       description,
       status: status || "pending",
+      priority: priority || "Medium",
+      dueDate: dueDate ? new Date(dueDate) : null, // ✅ FIX
       user: req.user._id,
     });
 
@@ -30,9 +30,10 @@ const createTask = async (req, res, next) => {
   }
 };
 
+// UPDATE TASK
 const updateTask = async (req, res, next) => {
   try {
-    const { title, description, status } = req.body;
+    const { title, description, status, priority, dueDate } = req.body;
 
     const task = await Task.findOne({
       _id: req.params.id,
@@ -46,6 +47,8 @@ const updateTask = async (req, res, next) => {
     task.title = title ?? task.title;
     task.description = description ?? task.description;
     task.status = status ?? task.status;
+    task.priority = priority ?? task.priority;
+    task.dueDate = dueDate ? new Date(dueDate) : null; // ✅ FIX
 
     const updatedTask = await task.save();
     res.status(200).json(updatedTask);
@@ -54,6 +57,7 @@ const updateTask = async (req, res, next) => {
   }
 };
 
+// DELETE TASK
 const deleteTask = async (req, res, next) => {
   try {
     const task = await Task.findOne({

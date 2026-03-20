@@ -9,6 +9,7 @@ const initialFormState = {
   description: "",
   status: "pending",
   priority: "Medium",
+  dueDate: "", // ✅ important
 };
 
 function DashboardPage() {
@@ -32,7 +33,7 @@ function DashboardPage() {
   const completed = tasks.filter((t) => t.status === "completed").length;
   const pending = tasks.filter((t) => t.status === "pending").length;
 
-  // 🌗 THEME FIXED
+  // 🌗 THEME
   useEffect(() => {
     const root = document.documentElement;
 
@@ -75,16 +76,21 @@ function DashboardPage() {
     setFormData(initialFormState);
     setEditingTaskId(null);
   };
-
+console.log("FORM DATA:", formData);
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError("");
 
     try {
+      const payload = {
+        ...formData,
+        dueDate: formData.dueDate || null,
+      };
+
       if (editingTaskId) {
         const { data } = await axiosInstance.put(
           `/tasks/${editingTaskId}`,
-          formData
+          payload
         );
 
         setTasks((prev) =>
@@ -93,7 +99,11 @@ function DashboardPage() {
           )
         );
       } else {
-        const { data } = await axiosInstance.post("/tasks", formData);
+        const { data } = await axiosInstance.post(
+          "/tasks",
+          payload
+        );
+
         setTasks((prev) => [data, ...prev]);
       }
 
@@ -110,6 +120,7 @@ function DashboardPage() {
       description: task.description,
       status: task.status,
       priority: task.priority || "Medium",
+      dueDate: task.dueDate ? task.dueDate.slice(0, 10) : "",
     });
   };
 
@@ -134,6 +145,7 @@ function DashboardPage() {
         description: task.description,
         status: nextStatus,
         priority: task.priority,
+        dueDate: task.dueDate,
       });
 
       setTasks((prev) =>
@@ -249,7 +261,6 @@ function DashboardPage() {
               onEdit={handleEdit}
               onDelete={handleDelete}
               onToggleStatus={handleToggleStatus}
-              setTasks={setTasks}
             />
           )}
         </div>
