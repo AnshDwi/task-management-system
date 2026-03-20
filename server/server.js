@@ -13,7 +13,7 @@ const app = express();
 // ✅ FIXED CORS (IMPORTANT)
 app.use(
   cors({
-    origin: "*", // ✅ allow all (for now)
+    origin: "*",
     credentials: true,
   })
 );
