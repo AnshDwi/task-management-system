@@ -35,9 +35,29 @@ function TaskForm({
           />
         </div>
 
+        {/* 🔥 ADD THIS BLOCK */}
+        <div className="form-group">
+          <label htmlFor="priority">Priority</label>
+          <select
+            id="priority"
+            name="priority"
+            value={formData.priority}
+            onChange={onChange}
+          >
+            <option value="Low">Low</option>
+            <option value="Medium">Medium</option>
+            <option value="High">High</option>
+          </select>
+        </div>
+
         <div className="form-group">
           <label htmlFor="status">Status</label>
-          <select id="status" name="status" value={formData.status} onChange={onChange}>
+          <select
+            id="status"
+            name="status"
+            value={formData.status}
+            onChange={onChange}
+          >
             <option value="pending">Pending</option>
             <option value="completed">Completed</option>
           </select>
@@ -48,7 +68,11 @@ function TaskForm({
             {isEditing ? "Update Task" : "Add Task"}
           </button>
           {isEditing && (
-            <button type="button" className="secondary-button" onClick={onCancelEdit}>
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={onCancelEdit}
+            >
               Cancel
             </button>
           )}
