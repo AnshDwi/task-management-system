@@ -13,7 +13,10 @@ const app = express();
 // ✅ FIXED CORS (IMPORTANT)
 app.use(
   cors({
-    origin: "*",
+    origin: [
+      "http://localhost:5173",
+      "https://task-management-system-gamma.vercel.app",
+    ],
     credentials: true,
   })
 );
