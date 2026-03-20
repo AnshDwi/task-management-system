@@ -1,0 +1,12 @@
+{
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "https://task-backend-791c.onrender.com/api/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/client/dist/index.html"
+    }
+  ]
+}
