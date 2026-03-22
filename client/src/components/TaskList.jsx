@@ -4,87 +4,60 @@ function TaskList({ tasks, onEdit, onDelete, onToggleStatus }) {
   if (tasks.length === 0) {
     return (
       <div className="empty-state">
-        <h3>🚀 No tasks yet</h3>
-        <p>Create your first task to get started.</p>
+        <h3>No tasks yet</h3>
+        <p>Create your first task to start building momentum.</p>
       </div>
     );
   }
 
   return (
     <div className="task-list">
-      {tasks.map((task) => {
-        const isOverdue =
-          task.dueDate &&
-          new Date(task.dueDate) < new Date() &&
-          task.status !== "completed";
-
-        return (
-          <motion.div
-            key={task._id}
-            className={`task-card ${isOverdue ? "overdue" : ""}`}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            whileHover={{ scale: 1.03 }}
-          >
-            {/* TOP */}
-            <div className="task-card-top">
-              <div>
-                <h3>{task.title}</h3>
-
-                {/* STATUS */}
-                <span className={`status-badge ${task.status}`}>
-                  {task.status}
+      {tasks.map((task) => (
+        <motion.div
+          key={task._id}
+          className={`task-card ${task.status === "completed" ? "task-completed" : ""}`}
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.25, ease: "easeOut" }}
+        >
+          <div className="task-card-top">
+            <div>
+              <h3>{task.title}</h3>
+              <div className="badge-row">
+                <span className={`status-badge ${task.status}`}>{task.status}</span>
+                <span className={`priority-badge ${task.priority?.toLowerCase() || "medium"}`}>
+                  {task.priority || "Medium"}
                 </span>
-
-                {/* PRIORITY */}
-                <span
-                  className={`priority-badge ${task.priority?.toLowerCase()}`}
-                >
-                  {task.priority}
-                </span>
+                {task.dueDate && (
+                  <span className="date-badge">
+                    Due {new Date(task.dueDate).toLocaleDateString()}
+                  </span>
+                )}
               </div>
-
-              {/* CHECKBOX */}
-              <label className="checkbox-row">
-                <input
-                  type="checkbox"
-                  checked={task.status === "completed"}
-                  onChange={() => onToggleStatus(task)}
-                />
-                Done
-              </label>
             </div>
 
-            {/* DESCRIPTION */}
-            <p>{task.description || "No description added."}</p>
+            <label className="checkbox-row">
+              <input
+                type="checkbox"
+                checked={task.status === "completed"}
+                onChange={() => onToggleStatus(task)}
+              />
+              Mark done
+            </label>
+          </div>
 
-            {/* 📅 DUE DATE */}
-            <p className="due-date">
-              📅{" "}
-              {task.dueDate
-                ? new Date(task.dueDate).toLocaleDateString()
-                : "No deadline"}
-            </p>
+          <p>{task.description || "No description added."}</p>
 
-            {/* ACTIONS */}
-            <div className="task-actions">
-              <button
-                className="secondary-button"
-                onClick={() => onEdit(task)}
-              >
-                ✏️ Edit
-              </button>
-
-              <button
-                className="danger-button"
-                onClick={() => onDelete(task._id)}
-              >
-                🗑 Delete
-              </button>
-            </div>
-          </motion.div>
-        );
-      })}
+          <div className="task-actions">
+            <button className="secondary-button" onClick={() => onEdit(task)}>
+              Edit
+            </button>
+            <button className="danger-button" onClick={() => onDelete(task._id)}>
+              Delete
+            </button>
+          </div>
+        </motion.div>
+      ))}
     </div>
   );
 }

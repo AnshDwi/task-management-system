@@ -1,73 +1,153 @@
-import { useEffect, useState } from "react";
-import axiosInstance from "../api/axiosInstance";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ArrowDownUp, BrainCircuit, RefreshCw } from "lucide-react";
+import {
+  createTask,
+  deleteTask,
+  getTasks,
+  reorderTasks,
+  updateTask,
+} from "../api/taskApi";
+import { disconnectSocket, getSocket } from "../api/socket";
+import AnalyticsPanel from "../components/AnalyticsPanel";
+import CalendarView from "../components/CalendarView";
+import LoadingSkeleton from "../components/LoadingSkeleton";
+import NotificationCenter from "../components/NotificationCenter";
+import Sidebar from "../components/Sidebar";
+import SuggestionPanel from "../components/SuggestionPanel";
+import TaskBoard from "../components/TaskBoard";
 import TaskForm from "../components/TaskForm";
-import TaskList from "../components/TaskList";
 import { useAuth } from "../context/AuthContext";
 
 const initialFormState = {
   title: "",
   description: "",
-  status: "pending",
   priority: "Medium",
-  dueDate: "", // ✅ important
+  category: "Work",
+  status: "pending",
+  dueDate: "",
 };
+
+function isSameDay(dateA, dateB) {
+  return (
+    dateA.getFullYear() === dateB.getFullYear() &&
+    dateA.getMonth() === dateB.getMonth() &&
+    dateA.getDate() === dateB.getDate()
+  );
+}
 
 function DashboardPage() {
   const { user, logout } = useAuth();
-
   const [tasks, setTasks] = useState([]);
   const [formData, setFormData] = useState(initialFormState);
   const [editingTaskId, setEditingTaskId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [sortBy, setSortBy] = useState("status");
+  const [notifications, setNotifications] = useState([]);
+  const [activeView, setActiveView] = useState("board");
+  const fetchTasksRef = useRef(() => {});
+  const lastAlertSignature = useRef("");
 
-  const [filterPriority, setFilterPriority] = useState("All");
-  const [search, setSearch] = useState("");
+  const pushNotification = (title, message, type = "info") => {
+    const id = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    const nextNotification = { id, title, message, type };
 
-  const [theme, setTheme] = useState(
-    localStorage.getItem("theme") || "system"
-  );
+    setNotifications((previous) => [nextNotification, ...previous].slice(0, 8));
 
-  // 📊 STATS
-  const total = tasks.length;
-  const completed = tasks.filter((t) => t.status === "completed").length;
-  const pending = tasks.filter((t) => t.status === "pending").length;
+    window.setTimeout(() => {
+      setNotifications((previous) => previous.filter((item) => item.id !== id));
+    }, 4500);
+  };
 
-  // 🌗 THEME
-  useEffect(() => {
-    const root = document.documentElement;
-
-    if (theme === "dark") {
-      root.setAttribute("data-theme", "dark");
-    } else if (theme === "light") {
-      root.removeAttribute("data-theme");
-    } else {
-      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-      root.setAttribute("data-theme", prefersDark ? "dark" : "light");
-    }
-
-    localStorage.setItem("theme", theme);
-  }, [theme]);
-
-  const fetchTasks = async () => {
+  const fetchTasksData = async ({ silent = false } = {}) => {
     try {
-      setLoading(true);
-      const { data } = await axiosInstance.get("/tasks");
+      if (!silent) {
+        setLoading(true);
+      }
+
+      setError("");
+
+      const { data } = await getTasks({
+        search: searchTerm || undefined,
+        status: statusFilter,
+        category: categoryFilter,
+        sortBy,
+      });
+
       setTasks(data);
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to fetch tasks");
+      const message = err.response?.data?.message || "Failed to fetch tasks";
+      setError(message);
+      pushNotification("Sync issue", message, "error");
     } finally {
-      setLoading(false);
+      if (!silent) {
+        setLoading(false);
+      }
     }
   };
 
   useEffect(() => {
-    fetchTasks();
+    fetchTasksRef.current = fetchTasksData;
+  }, [searchTerm, statusFilter, categoryFilter, sortBy]);
+
+  useEffect(() => {
+    fetchTasksData();
+  }, [searchTerm, statusFilter, categoryFilter, sortBy]);
+
+  useEffect(() => {
+    const socket = getSocket();
+
+    if (!socket) {
+      return undefined;
+    }
+
+    const refreshSilently = () => fetchTasksRef.current({ silent: true });
+
+    socket.on("task:created", refreshSilently);
+    socket.on("task:updated", refreshSilently);
+    socket.on("task:deleted", refreshSilently);
+    socket.on("task:reordered", refreshSilently);
+
+    return () => {
+      socket.off("task:created", refreshSilently);
+      socket.off("task:updated", refreshSilently);
+      socket.off("task:deleted", refreshSilently);
+      socket.off("task:reordered", refreshSilently);
+      disconnectSocket();
+    };
   }, []);
 
+  useEffect(() => {
+    const today = new Date();
+    const overdueCount = tasks.filter(
+      (task) => task.dueDate && new Date(task.dueDate) < today && task.status !== "completed"
+    ).length;
+    const dueTodayCount = tasks.filter(
+      (task) => task.dueDate && isSameDay(new Date(task.dueDate), today) && task.status !== "completed"
+    ).length;
+
+    const signature = `${overdueCount}-${dueTodayCount}`;
+    if (signature === lastAlertSignature.current) {
+      return;
+    }
+
+    lastAlertSignature.current = signature;
+
+    if (overdueCount > 0) {
+      pushNotification("Overdue tasks", `${overdueCount} task(s) are overdue`, "warning");
+    }
+
+    if (dueTodayCount > 0) {
+      pushNotification("Due today", `${dueTodayCount} task(s) should be finished today`, "info");
+    }
+  }, [tasks]);
+
   const handleChange = (event) => {
-    setFormData((prev) => ({
-      ...prev,
+    setFormData((previous) => ({
+      ...previous,
       [event.target.name]: event.target.value,
     }));
   };
@@ -76,195 +156,351 @@ function DashboardPage() {
     setFormData(initialFormState);
     setEditingTaskId(null);
   };
-console.log("FORM DATA:", formData);
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError("");
 
+    const payload = {
+      ...formData,
+      dueDate: formData.dueDate || null,
+    };
+
     try {
-      const payload = {
-        ...formData,
-        dueDate: formData.dueDate || null,
-      };
-
       if (editingTaskId) {
-        const { data } = await axiosInstance.put(
-          `/tasks/${editingTaskId}`,
-          payload
+        const { data } = await updateTask(editingTaskId, payload);
+        setTasks((previous) =>
+          previous.map((task) => (task._id === editingTaskId ? data : task))
         );
-
-        setTasks((prev) =>
-          prev.map((task) =>
-            task._id === editingTaskId ? data : task
-          )
-        );
+        pushNotification("Task updated", `"${data.title}" saved successfully`, "success");
       } else {
-        const { data } = await axiosInstance.post(
-          "/tasks",
-          payload
-        );
-
-        setTasks((prev) => [data, ...prev]);
+        const { data } = await createTask(payload);
+        setTasks((previous) => [data, ...previous]);
+        pushNotification("Task created", `"${data.title}" added successfully`, "success");
       }
 
       resetForm();
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to save task");
+      const message = err.response?.data?.message || "Failed to save task";
+      setError(message);
+      pushNotification("Save failed", message, "error");
     }
   };
 
   const handleEdit = (task) => {
     setEditingTaskId(task._id);
     setFormData({
-      title: task.title,
-      description: task.description,
-      status: task.status,
+      title: task.title || "",
+      description: task.description || "",
       priority: task.priority || "Medium",
-      dueDate: task.dueDate ? task.dueDate.slice(0, 10) : "",
+      category: task.category || "Work",
+      status: task.status || "pending",
+      dueDate: task.dueDate ? new Date(task.dueDate).toISOString().split("T")[0] : "",
     });
   };
 
-  const handleDelete = async (taskId) => {
+  const handleDeleteTask = async (id) => {
     try {
-      await axiosInstance.delete(`/tasks/${taskId}`);
-      setTasks((prev) =>
-        prev.filter((task) => task._id !== taskId)
-      );
+      await deleteTask(id);
+      setTasks((previous) => previous.filter((task) => task._id !== id));
+      pushNotification("Task deleted", "Task removed successfully", "success");
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to delete task");
+      const message = err.response?.data?.message || "Failed to delete task";
+      setError(message);
+      pushNotification("Delete failed", message, "error");
     }
   };
 
   const handleToggleStatus = async (task) => {
-    const nextStatus =
-      task.status === "completed" ? "pending" : "completed";
+    const nextStatus = task.status === "completed" ? "pending" : "completed";
 
     try {
-      const { data } = await axiosInstance.put(`/tasks/${task._id}`, {
+      const { data } = await updateTask(task._id, {
         title: task.title,
         description: task.description,
-        status: nextStatus,
         priority: task.priority,
+        category: task.category,
         dueDate: task.dueDate,
+        order: task.order,
+        status: nextStatus,
       });
 
-      setTasks((prev) =>
-        prev.map((t) => (t._id === task._id ? data : t))
+      setTasks((previous) =>
+        previous.map((currentTask) => (currentTask._id === task._id ? data : currentTask))
       );
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to update task");
+      const message = err.response?.data?.message || "Failed to update task status";
+      setError(message);
+      pushNotification("Update failed", message, "error");
+    }
+  };
+
+  const groupedTasks = useMemo(() => {
+    const grouped = {
+      pending: [],
+      completed: [],
+    };
+
+    tasks.forEach((task) => {
+      grouped[task.status]?.push(task);
+    });
+
+    grouped.pending.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+    grouped.completed.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+
+    return grouped;
+  }, [tasks]);
+
+  const stats = useMemo(() => {
+    const completed = tasks.filter((task) => task.status === "completed").length;
+    const pending = tasks.filter((task) => task.status === "pending").length;
+    const dueToday = tasks.filter(
+      (task) => task.dueDate && isSameDay(new Date(task.dueDate), new Date())
+    ).length;
+    const overdue = tasks.filter(
+      (task) => task.dueDate && new Date(task.dueDate) < new Date() && task.status !== "completed"
+    ).length;
+
+    return [
+      { label: "Total Tasks", value: tasks.length },
+      { label: "Pending", value: pending },
+      { label: "Due Today", value: dueToday },
+      { label: "Overdue", value: overdue },
+    ];
+  }, [tasks]);
+
+  const dragLocked =
+    searchTerm.trim().length > 0 ||
+    statusFilter !== "all" ||
+    categoryFilter !== "all" ||
+    sortBy !== "status";
+
+  const handleDragEnd = async (result) => {
+    if (dragLocked) {
+      pushNotification(
+        "Board lock",
+        "Clear search, category, status, and custom sorting to reorder tasks safely.",
+        "warning"
+      );
+      return;
+    }
+
+    const { source, destination } = result;
+
+    if (!destination) {
+      return;
+    }
+
+    if (
+      source.droppableId === destination.droppableId &&
+      source.index === destination.index
+    ) {
+      return;
+    }
+
+    const nextGrouped = {
+      pending: [...groupedTasks.pending],
+      completed: [...groupedTasks.completed],
+    };
+
+    const sourceColumn = [...nextGrouped[source.droppableId]];
+    const [movedTask] = sourceColumn.splice(source.index, 1);
+
+    const destinationColumn =
+      source.droppableId === destination.droppableId
+        ? sourceColumn
+        : [...nextGrouped[destination.droppableId]];
+
+    const updatedTask = {
+      ...movedTask,
+      status: destination.droppableId,
+    };
+
+    destinationColumn.splice(destination.index, 0, updatedTask);
+
+    nextGrouped[source.droppableId] = sourceColumn;
+    nextGrouped[destination.droppableId] = destinationColumn;
+
+    const updates = [
+      ...nextGrouped.pending.map((task, index) => ({
+        ...task,
+        status: "pending",
+        order: index,
+      })),
+      ...nextGrouped.completed.map((task, index) => ({
+        ...task,
+        status: "completed",
+        order: index,
+      })),
+    ];
+
+    setTasks((previous) =>
+      previous.map((task) => {
+        const updated = updates.find((item) => item._id === task._id);
+        return updated ? { ...task, status: updated.status, order: updated.order } : task;
+      })
+    );
+
+    try {
+      const { data } = await reorderTasks(
+        updates.map((task) => ({
+          id: task._id,
+          status: task.status,
+          order: task.order,
+        }))
+      );
+
+      setTasks(data);
+    } catch (err) {
+      const message = err.response?.data?.message || "Failed to sync the board order";
+      setError(message);
+      pushNotification("Reorder failed", message, "error");
+      fetchTasksData({ silent: true });
     }
   };
 
   return (
-    <div className="dashboard-page">
-      {/* HEADER */}
-      <header className="dashboard-header">
-        <div>
-          <p className="eyebrow">Task Manager</p>
-          <h1>{user?.name}'s Dashboard</h1>
-        </div>
+    <div className="dashboard-shell">
+      <NotificationCenter
+        notifications={notifications}
+        onDismiss={(id) =>
+          setNotifications((previous) => previous.filter((item) => item.id !== id))
+        }
+      />
 
-        <div className="header-actions">
-          <select
-            value={theme}
-            onChange={(e) => setTheme(e.target.value)}
-            className="theme-select"
-          >
-            <option value="system">System</option>
-            <option value="light">Light</option>
-            <option value="dark">Dark</option>
-          </select>
+      <Sidebar activeView={activeView} onChangeView={setActiveView} user={user} />
 
-          <button className="secondary-button" onClick={logout}>
-            Logout
-          </button>
-        </div>
-      </header>
+      <div className="dashboard-page">
+        <header className="dashboard-header">
+          <div>
+            <p className="eyebrow">Portfolio Killer Build</p>
+            <h1>{user?.name || "Your"} Task Command Center</h1>
+            <p className="header-subtitle">
+              Realtime updates, category-aware filtering, deadline intelligence, analytics,
+              and a calendar view in one polished workspace.
+            </p>
+          </div>
 
-      {/* STATS */}
-      <div className="stats">
-        <div className="stat-card">
-          <h3>Total</h3>
-          <p>{total}</p>
-        </div>
-        <div className="stat-card">
-          <h3>Completed</h3>
-          <p>{completed}</p>
-        </div>
-        <div className="stat-card">
-          <h3>Pending</h3>
-          <p>{pending}</p>
-        </div>
-      </div>
-
-      {/* MAIN */}
-      <section className="dashboard-grid">
-        <div>
-          <TaskForm
-            formData={formData}
-            onChange={handleChange}
-            onSubmit={handleSubmit}
-            isEditing={Boolean(editingTaskId)}
-            onCancelEdit={resetForm}
-          />
-
-          {error && <p className="error-message">{error}</p>}
-        </div>
-
-        <div className="task-panel">
-          <div className="task-panel-header">
-            <h2>Your Tasks</h2>
-            <button className="secondary-button" onClick={fetchTasks}>
+          <div className="header-actions">
+            <button
+              type="button"
+              className="secondary-button icon-button"
+              onClick={() => fetchTasksData()}
+            >
+              <RefreshCw size={16} />
               Refresh
             </button>
-          </div>
-
-          {/* SEARCH */}
-          <input
-            type="text"
-            placeholder="🔍 Search tasks..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="search-input"
-          />
-
-          {/* FILTER */}
-          <div className="form-group">
-            <label>Filter by Priority</label>
-            <select
-              value={filterPriority}
-              onChange={(e) => setFilterPriority(e.target.value)}
+            <button
+              type="button"
+              className="secondary-button icon-button"
+              onClick={() => setActiveView("suggestions")}
             >
-              <option value="All">All</option>
-              <option value="Low">Low</option>
-              <option value="Medium">Medium</option>
-              <option value="High">High</option>
-            </select>
+              <BrainCircuit size={16} />
+              Suggest today
+            </button>
+            <button type="button" className="secondary-button" onClick={logout}>
+              Logout
+            </button>
+          </div>
+        </header>
+
+        <section className="stats-grid">
+          {stats.map((item) => (
+            <div key={item.label} className="stat-card hoverable-card">
+              <span>{item.label}</span>
+              <strong>{item.value}</strong>
+            </div>
+          ))}
+        </section>
+
+        <section className="dashboard-grid enhanced-grid">
+          <div className="left-column">
+            <TaskForm
+              formData={formData}
+              onChange={handleChange}
+              onSubmit={handleSubmit}
+              isEditing={Boolean(editingTaskId)}
+              onCancelEdit={resetForm}
+            />
+
+            <SuggestionPanel tasks={tasks} />
+
+            {error && <p className="error-message dashboard-error">{error}</p>}
           </div>
 
-          {loading ? (
-            <div className="empty-state">
-              <h3>Loading tasks...</h3>
+          <div className="content-stack">
+            <div className="task-panel board-panel">
+              <div className="task-panel-header">
+                <div>
+                  <p className="eyebrow">Smart Controls</p>
+                  <h2>Search, sort, and manage</h2>
+                </div>
+                <div className="inline-note">
+                  <ArrowDownUp size={14} />
+                  Drag works best in board mode with default sorting
+                </div>
+              </div>
+
+              <div className="toolbar toolbar-rich">
+                <input
+                  type="text"
+                  placeholder="Search title, description, or category"
+                  value={searchTerm}
+                  onChange={(event) => setSearchTerm(event.target.value)}
+                />
+
+                <select
+                  value={categoryFilter}
+                  onChange={(event) => setCategoryFilter(event.target.value)}
+                >
+                  <option value="all">All categories</option>
+                  <option value="Work">Work</option>
+                  <option value="Personal">Personal</option>
+                  <option value="Study">Study</option>
+                </select>
+
+                <select
+                  value={statusFilter}
+                  onChange={(event) => setStatusFilter(event.target.value)}
+                >
+                  <option value="all">All statuses</option>
+                  <option value="pending">Pending</option>
+                  <option value="completed">Completed</option>
+                </select>
+
+                <select value={sortBy} onChange={(event) => setSortBy(event.target.value)}>
+                  <option value="status">Board order</option>
+                  <option value="newest">Newest</option>
+                  <option value="oldest">Oldest</option>
+                  <option value="priority">Priority</option>
+                  <option value="dueDate">Due date</option>
+                </select>
+              </div>
+
+              {loading ? (
+                <LoadingSkeleton />
+              ) : activeView === "calendar" ? (
+                <CalendarView tasks={tasks} />
+              ) : activeView === "analytics" ? (
+                <AnalyticsPanel tasks={tasks} />
+              ) : activeView === "suggestions" ? (
+                <SuggestionPanel tasks={tasks} />
+              ) : (
+                <TaskBoard
+                  groupedTasks={groupedTasks}
+                  onDragEnd={handleDragEnd}
+                  onEdit={handleEdit}
+                  onDelete={handleDeleteTask}
+                  onToggleStatus={handleToggleStatus}
+                  dragLocked={dragLocked}
+                />
+              )}
             </div>
-          ) : (
-            <TaskList
-              tasks={tasks
-                .filter((task) =>
-                  filterPriority === "All"
-                    ? true
-                    : task.priority === filterPriority
-                )
-                .filter((task) =>
-                  task.title.toLowerCase().includes(search.toLowerCase())
-                )}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-              onToggleStatus={handleToggleStatus}
-            />
-          )}
-        </div>
-      </section>
+
+            {activeView !== "analytics" && <AnalyticsPanel tasks={tasks} />}
+          </div>
+        </section>
+      </div>
     </div>
   );
 }

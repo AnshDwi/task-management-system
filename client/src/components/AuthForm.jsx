@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
 
 function AuthForm({
   title,
@@ -11,9 +12,17 @@ function AuthForm({
   error,
 }) {
   return (
-    <div className="auth-card">
-      <h1>{title}</h1>
-      <p>{subtitle}</p>
+    <motion.div
+      className="auth-card"
+      initial={{ opacity: 0, y: 24 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
+    >
+      <div className="auth-card-copy">
+        <p className="eyebrow">TaskFlow</p>
+        <h1>{title}</h1>
+        <p className="auth-subtitle">{subtitle}</p>
+      </div>
 
       <form className="auth-form" onSubmit={onSubmit}>
         {isRegister && (
@@ -59,7 +68,7 @@ function AuthForm({
 
         {error && <p className="error-message">{error}</p>}
 
-        <button type="submit" className="primary-button">
+        <button type="submit" className="primary-button auth-submit">
           {buttonText}
         </button>
       </form>
@@ -70,7 +79,7 @@ function AuthForm({
           {isRegister ? "Login here" : "Register here"}
         </Link>
       </p>
-    </div>
+    </motion.div>
   );
 }
 

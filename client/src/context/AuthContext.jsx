@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import axiosInstance from "../api/axiosInstance";
+import { disconnectSocket } from "../api/socket";
 
 const AuthContext = createContext(null);
 
@@ -11,7 +12,7 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const validateUser = async () => {
+    const validateSession = async () => {
       const token = localStorage.getItem("token");
 
       if (!token) {
@@ -32,31 +33,34 @@ export function AuthProvider({ children }) {
       }
     };
 
-    validateUser();
+    validateSession();
   }, []);
+
+  const syncSession = (data) => {
+    localStorage.setItem("token", data.token);
+    localStorage.setItem("user", JSON.stringify(data.user));
+    setUser(data.user);
+  };
+
+  const login = async (credentials) => {
+    const { data } = await axiosInstance.post("/auth/login", credentials);
+    syncSession(data);
+  };
 
   const register = async (formData) => {
     const { data } = await axiosInstance.post("/auth/register", formData);
-    localStorage.setItem("token", data.token);
-    localStorage.setItem("user", JSON.stringify(data.user));
-    setUser(data.user);
-  };
-
-  const login = async (formData) => {
-    const { data } = await axiosInstance.post("/auth/login", formData);
-    localStorage.setItem("token", data.token);
-    localStorage.setItem("user", JSON.stringify(data.user));
-    setUser(data.user);
+    syncSession(data);
   };
 
   const logout = () => {
+    disconnectSocket();
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, register, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );

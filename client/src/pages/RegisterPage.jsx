@@ -30,22 +30,32 @@ function RegisterPage() {
     try {
       await register(formData);
     } catch (err) {
-      setError(err.response?.data?.message || "Registration failed");
+      setError(err.response?.data?.message || "Registration failed. Try again.");
     }
   };
 
   return (
     <div className="auth-page">
-      <AuthForm
-        title="Create account"
-        subtitle="Start managing your tasks with a simple full-stack app."
-        formData={formData}
-        onChange={handleChange}
-        onSubmit={handleSubmit}
-        buttonText="Register"
-        isRegister
-        error={error}
-      />
+      <div className="auth-layout">
+        <div className="auth-panel">
+          <p className="eyebrow">Secure Onboarding</p>
+          <h2>Create your workspace and start shipping tasks with confidence.</h2>
+          <p>
+            Register once, receive a JWT-backed session, and manage all of your work
+            from one protected dashboard.
+          </p>
+        </div>
+        <AuthForm
+          title="Create account"
+          subtitle="Get started with a production-like MERN workflow."
+          formData={formData}
+          onChange={handleChange}
+          onSubmit={handleSubmit}
+          buttonText="Register"
+          isRegister
+          error={error}
+        />
+      </div>
     </div>
   );
 }
