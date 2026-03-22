@@ -37,6 +37,10 @@ It goes beyond basic CRUD and feels like a modern product: secure auth, protecte
 
 ![Dashboard](./screenshots/screenshotsdashboard.png)
 
+### Analytics View
+
+![Analytics View](./screenshots/screenshotsanalytics.png)
+
 ## Tech Stack
 
 ### Frontend
