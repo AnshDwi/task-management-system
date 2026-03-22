@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: task-management-api
+    runtime: node
+    rootDir: server
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: CLIENT_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: MONGO_URI
+        sync: false

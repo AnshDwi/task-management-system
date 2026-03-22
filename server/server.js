@@ -17,13 +17,35 @@ const server = http.createServer(app);
 
 const allowedOrigins = [
   "http://localhost:5173",
-  "https://task-management-system-gamma.vercel.app",
   process.env.CLIENT_URL,
 ].filter(Boolean);
 
+const isAllowedOrigin = (origin) => {
+  if (!origin) {
+    return true;
+  }
+
+  if (allowedOrigins.includes(origin)) {
+    return true;
+  }
+
+  try {
+    const hostname = new URL(origin).hostname;
+    return hostname.endsWith(".vercel.app");
+  } catch (error) {
+    return false;
+  }
+};
+
 app.use(
   cors({
-    origin: allowedOrigins,
+    origin(origin, callback) {
+      if (isAllowedOrigin(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error("Origin not allowed by CORS"));
+    },
     credentials: true,
   })
 );
@@ -46,7 +68,13 @@ app.use((err, req, res, next) => {
 
 const io = new Server(server, {
   cors: {
-    origin: allowedOrigins,
+    origin(origin, callback) {
+      if (isAllowedOrigin(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error("Origin not allowed by CORS"));
+    },
     credentials: true,
   },
 });

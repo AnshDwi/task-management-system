@@ -245,6 +245,60 @@ npm run client:dev
 npm run client:build
 ```
 
+## Deployment
+
+### Frontend on Vercel
+
+This project is set up to deploy the frontend from the [client](C:\Users\anshikad\Desktop\Task Management System\client) folder.
+
+Use these settings in Vercel:
+
+- Framework Preset: `Vite`
+- Root Directory: `client`
+- Build Command: `npm run build`
+- Output Directory: `dist`
+- Install Command: `npm install`
+
+Environment variable:
+
+```env
+VITE_API_URL=https://YOUR-RENDER-BACKEND.onrender.com/api
+```
+
+The [client/vercel.json](C:\Users\anshikad\Desktop\Task Management System\client\vercel.json) file handles SPA route rewrites so routes like `/dashboard` work after refresh.
+
+### Backend on Render
+
+This project includes a Render blueprint in [render.yaml](C:\Users\anshikad\Desktop\Task Management System\render.yaml).
+
+Use these Render settings if you deploy manually:
+
+- Service Type: `Web Service`
+- Runtime: `Node`
+- Root Directory: `server`
+- Build Command: `npm install`
+- Start Command: `npm start`
+- Health Check Path: `/api`
+
+Environment variables:
+
+```env
+PORT=10000
+MONGO_URI=your_mongodb_atlas_connection_string
+JWT_SECRET=your_secure_secret
+CLIENT_URL=https://YOUR-VERCEL-FRONTEND.vercel.app
+```
+
+### Deployment Order
+
+1. Deploy the backend to Render first
+2. Copy the Render backend URL
+3. Add that URL to Vercel as `VITE_API_URL`
+4. Deploy the frontend to Vercel
+5. Copy the Vercel frontend URL
+6. Add that URL in Render as `CLIENT_URL`
+7. Redeploy the backend once so CORS uses the final frontend URL
+
 ## Architecture Notes
 
 - The frontend uses Axios interceptors to automatically attach JWT tokens.
