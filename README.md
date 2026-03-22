@@ -335,8 +335,7 @@ Use this in interviews:
 - Add file attachments and comments per task
 - Add refresh tokens and secure cookie auth
 - Add unit and integration tests
-- Deploy frontend on Vercel and backend on Render
-- Add dark mode and command palette support
+
 
 ## License
 
