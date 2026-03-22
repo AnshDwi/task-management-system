@@ -1,100 +1,156 @@
-# Task Management Web Application
+# TaskFlow Pro
 
-A production-like full-stack task management system built with React, Node.js, Express, MongoDB, Mongoose, and JWT authentication.
+A polished full-stack task management platform built with React, Node.js, Express, MongoDB, and JWT authentication.
 
-## Core Features
+It goes beyond basic CRUD and feels like a modern product: secure auth, protected routes, drag-and-drop task management, analytics, calendar planning, realtime updates, notifications, and a clean SaaS-style interface.
 
-- Secure user registration and login using JWT
-- Protected task routes for authenticated users only
-- Full CRUD operations for tasks
-- Task status management with `pending` and `completed`
-- Task priority and due date support
-- Task categories with category-based filtering
-- Search by title, description, and category
-- Sorting by newest, oldest, priority, due date, and board order
-- Drag-and-drop Kanban board for realtime task movement
-- Live analytics dashboard with completion and priority insights
-- In-app notification center for task activity
-- Realtime updates across sessions with Socket.IO
+## Highlights
+
+- JWT-based authentication with protected routes
+- Task CRUD with priority, category, due date, and status
+- Drag-and-drop Kanban workflow
+- Realtime task sync with Socket.IO
+- Search, filtering, and sorting
 - Calendar view for due-date planning
-- AI-style daily task suggestions based on urgency and priority
-- Role field support for `user` and `admin`
-- Clean responsive SaaS-style UI with glassmorphism, motion, icons, and loading skeletons
+- Analytics dashboard with charts and completion insights
+- Notification toasts and activity-style feedback
+- AI-style task suggestions for the day
+- Responsive, modern UI with motion and glassmorphism-inspired styling
+
+## Screenshots
+
+### Login
+
+![Login Screen](./screenshots/screenshotslogin.png)
+
+### Register
+
+![Register Screen](./screenshots/screenshotsregister.png)
+
+### Dashboard
+
+![Dashboard](./screenshots/screenshotsdashboard.png)
 
 ## Tech Stack
 
-- Frontend: React, React Router, Axios, Framer Motion, Lucide React, Chart.js, React Chart.js 2, @hello-pangea/dnd, Socket.IO Client, Vite
-- Backend: Node.js, Express, JWT, Mongoose, Socket.IO
-- Database: MongoDB / MongoDB Atlas
+### Frontend
+
+- React
+- React Router
+- Axios
+- Framer Motion
+- Lucide React
+- Chart.js
+- React Chart.js 2
+- `@hello-pangea/dnd`
+- Socket.IO Client
+- Vite
+
+### Backend
+
+- Node.js
+- Express
+- JWT
+- Mongoose
+- Socket.IO
+- bcryptjs
+
+### Database
+
+- MongoDB
+- MongoDB Atlas
+
+## Feature Breakdown
+
+### Authentication
+
+- User registration and login
+- JWT token generation and validation
+- Protected dashboard routes
+- Persistent session handling on the frontend
+
+### Task Management
+
+- Create, edit, delete, and view tasks
+- Mark tasks as `pending` or `completed`
+- Set `low`, `medium`, or `high` priority
+- Assign categories like `Work`, `Personal`, and `Study`
+- Add due dates with overdue and due-today awareness
+
+### Productivity Features
+
+- Drag tasks between columns
+- Search by title, description, and category
+- Filter by status and category
+- Sort by board order, due date, priority, and status
+- AI-style suggestions for which tasks to focus on today
+
+### Product-Like UI
+
+- Sidebar-based workspace layout
+- Analytics cards and charts
+- Calendar task view
+- Loading skeletons
+- Notification toasts
+- Smooth motion and modern card styling
+
+### Realtime
+
+- Live task updates across active sessions
+- Instant sync for create, update, delete, and reorder actions
 
 ## Project Structure
 
 ```text
 Task Management System/
-|-- client/
-|   |-- public/
-|   |-- src/
-|   |   |-- api/
-|   |   |   `-- axiosInstance.js
-|   |   |-- components/
-|   |   |   |-- AuthForm.jsx
-|   |   |   |-- ProtectedRoute.jsx
-|   |   |   |-- TaskForm.jsx
-|   |   |   `-- TaskList.jsx
-|   |   |-- context/
-|   |   |   `-- AuthContext.jsx
-|   |   |-- pages/
-|   |   |   |-- DashboardPage.jsx
-|   |   |   |-- LoginPage.jsx
-|   |   |   `-- RegisterPage.jsx
-|   |   |-- App.jsx
-|   |   |-- main.jsx
-|   |   `-- styles.css
-|   |-- .env.example
-|   |-- index.html
-|   |-- package.json
-|   `-- vite.config.js
-|-- screenshots/
-|-- server/
-|   |-- config/
-|   |   `-- db.js
-|   |-- controllers/
-|   |   |-- authController.js
-|   |   `-- taskController.js
-|   |-- middleware/
-|   |   `-- authMiddleware.js
-|   |-- models/
-|   |   |-- Task.js
-|   |   `-- User.js
-|   |-- routes/
-|   |   |-- authRoutes.js
-|   |   `-- taskRoutes.js
-|   |-- .env.example
-|   |-- package.json
-|   `-- server.js
-|-- .gitignore
-|-- package.json
-`-- README.md
+├── client/
+│   ├── src/
+│   │   ├── api/
+│   │   ├── components/
+│   │   ├── context/
+│   │   ├── pages/
+│   │   ├── App.jsx
+│   │   ├── main.jsx
+│   │   └── styles.css
+│   ├── .env.example
+│   ├── index.html
+│   ├── package.json
+│   └── vite.config.js
+├── server/
+│   ├── config/
+│   ├── controllers/
+│   ├── middleware/
+│   ├── models/
+│   ├── routes/
+│   ├── .env.example
+│   ├── package.json
+│   └── server.js
+├── screenshots/
+├── .gitignore
+├── package.json
+└── README.md
 ```
 
-## API Endpoints
+## API Overview
 
-### Authentication
+### Auth Routes
 
-- `POST /api/auth/register` create a user account
-- `POST /api/auth/login` authenticate a user and return a JWT
-- `GET /api/auth/me` get the authenticated user profile
+- `POST /api/auth/register`
+- `POST /api/auth/login`
+- `GET /api/auth/me`
 
-### Tasks
+### Task Routes
 
-- `GET /api/tasks` get all tasks for the logged-in user
-- `POST /api/tasks` create a task
-- `PUT /api/tasks/:id` update a task
-- `DELETE /api/tasks/:id` delete a task
+- `GET /api/tasks`
+- `POST /api/tasks`
+- `PUT /api/tasks/:id`
+- `DELETE /api/tasks/:id`
 
 ## Environment Variables
 
-### Backend `server/.env`
+### Backend
+
+Create [server/.env](C:\Users\anshikad\Desktop\Task Management System\server\.env) with:
 
 ```env
 PORT=5000
@@ -103,15 +159,26 @@ JWT_SECRET=your_super_secret_jwt_key
 CLIENT_URL=http://localhost:5173
 ```
 
-### Frontend `client/.env`
+If you are using MongoDB Atlas, replace `MONGO_URI` with your Atlas connection string.
+
+### Frontend
+
+Create [client/.env](C:\Users\anshikad\Desktop\Task Management System\client\.env) with:
 
 ```env
 VITE_API_URL=http://localhost:5000/api
 ```
 
-## Step-by-Step Setup
+## Local Setup
 
-### 1. Install dependencies
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/AnshDwi/task-management-system.git
+cd task-management-system
+```
+
+### 2. Install dependencies
 
 Backend:
 
@@ -127,9 +194,7 @@ cd client
 npm install
 ```
 
-### 2. Configure environment variables
-
-Copy the provided samples:
+### 3. Configure environment files
 
 ```bash
 cp server/.env.example server/.env
@@ -143,58 +208,36 @@ Copy-Item server\.env.example server\.env
 Copy-Item client\.env.example client\.env
 ```
 
-### 3. Start MongoDB
+### 4. Start MongoDB
 
-If you use local MongoDB, start your MongoDB service.
+- Use local MongoDB, or
+- use MongoDB Atlas if MongoDB is not installed locally
 
-If you do not have MongoDB installed, use MongoDB Atlas and replace `MONGO_URI` in `server/.env` with your Atlas connection string.
-
-### 4. Run the backend
+### 5. Start the backend
 
 ```bash
 cd server
 npm run dev
 ```
 
-### 5. Run the frontend
+### 6. Start the frontend
 
-In a new terminal:
+Open a second terminal:
 
 ```bash
 cd client
 npm run dev
 ```
 
-### 6. Open the app
-
-Visit:
+### 7. Open the app
 
 ```text
 http://localhost:5173
 ```
 
-## Production-Like Implementation Notes
+## Root Scripts
 
-- Passwords are hashed using `bcryptjs`
-- JWT tokens are validated through middleware before task access
-- Mongoose models define schema validation, ownership, categories, deadlines, and roles
-- Axios automatically attaches the auth token to API requests
-- The dashboard supports editing, deleting, searching, drag-and-drop ordering, and live status updates
-- Socket.IO broadcasts task creation, updates, deletes, and board reordering in real time
-- Notifications and analytics update immediately as task data changes
-- Chart.js powers completion and weekly activity charts
-- The calendar view and AI focus panel make the app feel closer to a real productivity product
-- The codebase is split into reusable frontend and backend modules
-
-## Interview Pitch
-
-You can present it like this:
-
-> I built a full-stack task management system with JWT authentication, realtime task sync using Socket.IO, drag-and-drop Kanban workflows, deadline intelligence, categories, analytics dashboards, calendar planning, and AI-style daily task suggestions. I focused on product-quality UX, modular architecture, and real-world usability.
-
-## Optional Root Scripts
-
-From the project root you can run:
+From the project root:
 
 ```bash
 npm run server:dev
@@ -202,13 +245,34 @@ npm run client:dev
 npm run client:build
 ```
 
-## Future Improvements
+## Architecture Notes
 
-- Add pagination and task sorting at API level
+- The frontend uses Axios interceptors to automatically attach JWT tokens.
+- The backend protects task routes through authentication middleware.
+- Mongoose models enforce schema structure for users and tasks.
+- Socket.IO keeps task changes synced in realtime.
+- The dashboard is split into reusable UI modules for analytics, calendar, board, notifications, and suggestions.
+
+## Why This Project Stands Out
+
+- It solves a real-world productivity workflow, not just a tutorial-level CRUD demo.
+- It includes both UX polish and engineering depth.
+- It demonstrates frontend state management, backend API design, authentication, database modeling, and realtime communication in one project.
+
+## Interview Pitch
+
+Use this in interviews:
+
+> I built a full-stack task management application with JWT authentication, realtime updates using Socket.IO, drag-and-drop workflows, deadline tracking, analytics dashboards, calendar planning, and smart task suggestions. I focused on modular architecture, production-like patterns, and a polished user experience.
+
+## Possible Next Improvements
+
+- Add team collaboration and shared workspaces
+- Add file attachments and comments per task
 - Add refresh tokens and secure cookie auth
-- Add form validation with a schema library
-- Add automated tests for API routes and UI flows
-- Add deployment pipelines for Vercel and Render
+- Add unit and integration tests
+- Deploy frontend on Vercel and backend on Render
+- Add dark mode and command palette support
 
 ## License
 
