@@ -4,6 +4,12 @@ A polished full-stack task management platform built with React, Node.js, Expres
 
 It goes beyond basic CRUD and feels like a modern product: secure auth, protected routes, drag-and-drop task management, analytics, calendar planning, realtime updates, notifications, and a clean SaaS-style interface.
 
+## Live Links
+
+- Live App: [https://task-management-system-gamma.vercel.app/login](https://task-management-system-gamma.vercel.app/login)
+- Backend API: [https://task-management-system-iupj.onrender.com/api](https://task-management-system-iupj.onrender.com/api)
+- GitHub Repository: [https://github.com/AnshDwi/task-management-system](https://github.com/AnshDwi/task-management-system)
+
 ## Highlights
 
 - JWT-based authentication with protected routes
